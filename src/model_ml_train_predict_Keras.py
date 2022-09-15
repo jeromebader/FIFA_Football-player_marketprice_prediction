@@ -100,10 +100,10 @@ def data_processing (df_fifa):
     return df_fifa_work
 
 
-def load_test_data ():
+def load_test_data (variable):
     df_test = pd.read_csv("./data/fifa21_test.csv", sep=",", low_memory=False, index_col=[0])
     df_fifa_predict = data_processing (df_test)
-    df_fifa_predict.drop(columns=["Value"],axis=1,inplace=True)
+    df_fifa_predict.drop(columns=[variable],axis=1,inplace=True)
     # for col in df_fifa_predict.columns:
     #     print (f"{col} type",df_fifa_predict[col].dtype)
 
@@ -122,6 +122,7 @@ print ("---"*20)
 print ("Football Player Price Estimation")
 print ("---"*20)
 opt = int(input('Enter 1 for run model OR Enter 2 for load model: \t '))
+variable = input('Enter variable name: Wage | Value | Release Clause: \t ')
 
 if opt == 1:
     # Load train data
@@ -132,10 +133,10 @@ if opt == 1:
     print ('---'*20)
 
     # Select the Data
-    X = df_fifa_train.drop(columns=['Value'], axis=1)
-    y = df_fifa_train [['Value']]
-    #X = X[:5000]
-    #y = y[:5000]
+    X = df_fifa_train.drop(columns=[variable], axis=1)
+    y = df_fifa_train [[variable]]
+   # X = X[:6000]
+   # y = y[:6000]
 
     # Split Train, Test data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.24, random_state=40)
@@ -151,23 +152,24 @@ if opt == 1:
 
 
     model_nn = keras.Sequential([
-        layers.Dense(600, activation='relu', input_shape=X_train_scale.shape[1:]),
+        layers.Dense(800, activation='relu', input_shape=X_train_scale.shape[1:]),
+        layers.Dense(600, activation='selu'),
         layers.Dense(400, activation='relu'),
-        layers.Dense(300, activation='relu'),
-        layers.Dense(200, activation='relu'),
+        layers.Dense(200, activation='selu'),
         layers.Dense(100, activation='relu'),
-        layers.Dense(50, activation='relu'),
-        layers.Dense(1, activation='relu')
+        layers.Dense(50, activation='selu'),
+        layers.Dense(1, activation='selu')
     ])
 
-    model_nn.compile(loss='mae',
-                optimizer=tf.keras.optimizers.RMSprop(learning_rate=0.0001),
-                metrics=['mae','mse'])
+    model_nn.compile(loss=tf.keras.losses.MeanAbsoluteError(),
+                optimizer=tf.keras.optimizers.RMSprop(learning_rate=0.00001),
+                 metrics=[tf.keras.metrics.MeanAbsoluteError(),tf.keras.metrics.MeanSquaredError()])
+                #metrics=['mae','mse'])
 
-    history_nn = model_nn.fit(X_train_scale, y_train, epochs=1000, validation_split=0.23, callbacks=keras.callbacks.EarlyStopping(monitor='val_mae', patience=10))
+    history_nn = model_nn.fit(X_train_scale, y_train, epochs=1000, validation_split=0.23, callbacks=keras.callbacks.EarlyStopping(monitor='val_mean_absolute_error', patience=10))
     df_hist = pd.DataFrame(history_nn.history)
     df_hist['epoch'] = history_nn.epoch
-    print(df_hist["mae"].argmin())
+
     model_nn.evaluate(X_test_scale, y_test)
     tiempo = datetime.today().strftime('%Y%m%d%H%M%S')
     model_nn.save(f"model_Fifa_NN__{tiempo}.h5")
@@ -192,7 +194,7 @@ if opt == 1:
     # Data import for the Prediction Data and processing
     print ("---"*20)
     print ("Prediction for unseen data")
-    df_test, df_fifa_predict =load_test_data()
+    df_test, df_fifa_predict =load_test_data(variable)
 
     # Scale and Do Prediction
     X_scal = escalar.fit_transform(df_fifa_predict) 
@@ -207,8 +209,8 @@ if opt == 1:
     print ('---'*20)
     print ('File creation')
     print ('---'*20)
-    df_predictions = pd.DataFrame(y_pred_fin, columns=["Value"])
-    df_test["Value"] = y_pred_fin
+    df_predictions = pd.DataFrame(y_pred_fin, columns=[variable])
+    df_test[variable] = y_pred_fin
     df_fin = df_test
     df_fin.to_csv(f"./model/fifa21_prediction{tiempo}.csv",index=False)
     # PICKLE FILES
