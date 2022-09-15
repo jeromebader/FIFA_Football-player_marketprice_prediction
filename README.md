@@ -1,8 +1,6 @@
 # Football player Marketprice Prediction
 
-<div style="width:400px; height:167px">
-![Fifa Logo]([/repository/assets/employee.png](https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/FIFA_Logo_%282010%29.svg/1200px-FIFA_Logo_%282010%29.svg.png?raw=true "Fifa Logo")
-</div>
+[![Fifa Logo]([https://img.shields.io/github/stars/pandao/editor.md.svg](https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/FIFA_Logo_%282010%29.svg/1200px-FIFA_Logo_%282010%29.svg.png)
 
 # Contexto
 
